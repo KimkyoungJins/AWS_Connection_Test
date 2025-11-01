@@ -1,197 +1,176 @@
+
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const HealthApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class HealthApp extends StatelessWidget {
+  const HealthApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sleep Data Logger',
+      title: '건강 정보 기록',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-          labelStyle: TextStyle(fontSize: 18),
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
+        fontFamily: 'Pretendard', // A modern and clean font
       ),
-      home: const SleepDataInputScreen(),
+      home: const HealthInputScreen(),
     );
   }
 }
 
-class SleepDataInputScreen extends StatefulWidget {
-  const SleepDataInputScreen({super.key});
+class HealthInputScreen extends StatefulWidget {
+  const HealthInputScreen({super.key});
 
   @override
-  State<SleepDataInputScreen> createState() => _SleepDataInputScreenState();
+  State<HealthInputScreen> createState() => _HealthInputScreenState();
 }
 
-class _SleepDataInputScreenState extends State<SleepDataInputScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _totalSleepTimeController = TextEditingController();
-  final _sleepEfficiencyController = TextEditingController();
+class _HealthInputScreenState extends State<HealthInputScreen> {
   final _heartRateController = TextEditingController();
-
-  String? _selectedSleepStage;
-  final List<String> _sleepStages = ['Awake', 'Light', 'Deep', 'REM'];
+  final _respiratoryRateController = TextEditingController();
+  final _bodyTempController = TextEditingController();
 
   @override
   void dispose() {
-    _totalSleepTimeController.dispose();
-    _sleepEfficiencyController.dispose();
     _heartRateController.dispose();
+    _respiratoryRateController.dispose();
+    _bodyTempController.dispose();
     super.dispose();
   }
 
-  void _submitData() {
-    if (_formKey.currentState!.validate()) {
-      final data = {
-        'totalSleepTime': _totalSleepTimeController.text,
-        'sleepStage': _selectedSleepStage,
-        'sleepEfficiency': _sleepEfficiencyController.text,
-        'heartRate': _heartRateController.text,
-      };
+  void _saveData() {
+    // In a real app, you would save the data here.
+    // For this example, we'll just show a confirmation message.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('정보가 성공적으로 저장되었습니다.'),
+        backgroundColor: Colors.teal,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
 
-      // Print data to console
-      print('Submitted Data: $data');
-
-      // Show a confirmation dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Submission Successful'),
-          content: Text('The following data has been submitted:\n\n'
-              'Total Sleep Time: ${data['totalSleepTime']}\n'
-              'Sleep Stage: ${data['sleepStage']}\n'
-              'Sleep Efficiency: ${data['sleepEfficiency']}%\n'
-              'Heart Rate: ${data['heartRate']} bpm'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Clear the form
-                _formKey.currentState!.reset();
-                _totalSleepTimeController.clear();
-                _sleepEfficiencyController.clear();
-                _heartRateController.clear();
-                setState(() {
-                  _selectedSleepStage = null;
-                });
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
+    // Clear the fields after saving
+    _heartRateController.clear();
+    _respiratoryRateController.clear();
+    _bodyTempController.clear();
+    // Unfocus to hide the keyboard
+    FocusScope.of(context).unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Log Sleep Data'),
+        title: const Text('건강 정보 기록', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: ListView(
           padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                TextFormField(
-                  controller: _totalSleepTimeController,
-                  decoration: const InputDecoration(
-                    labelText: '총 수면 시간 (Total Sleep Time)',
-                    hintText: 'e.g., 8h 30m',
+          children: [
+            _buildInfoCard(
+              controller: _heartRateController,
+              icon: Icons.favorite,
+              iconColor: Colors.red,
+              label: '심박수',
+              hint: '분당 심박수',
+              suffix: 'BPM',
+            ),
+            const SizedBox(height: 16),
+            _buildInfoCard(
+              controller: _respiratoryRateController,
+              icon: Icons.air,
+              iconColor: Colors.blue,
+              label: '호흡수',
+              hint: '분당 호흡수',
+              suffix: '회/분',
+            ),
+            const SizedBox(height: 16),
+            _buildInfoCard(
+              controller: _bodyTempController,
+              icon: Icons.thermostat,
+              iconColor: Colors.orange,
+              label: '체온',
+              hint: '섭씨 온도',
+              suffix: '°C',
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          onPressed: _saveData,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          child: const Text('저장하기'),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required TextEditingController controller,
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String hint,
+    required String suffix,
+  }) {
+    return Card(
+      elevation: 2.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: iconColor, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter total sleep time';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                DropdownButtonFormField<String>(
-                  value: _selectedSleepStage,
-                  decoration: const InputDecoration(
-                    labelText: '수면 단계 (Sleep Stage)',
-                  ),
-                  items: _sleepStages.map((String stage) {
-                    return DropdownMenuItem<String>(
-                      value: stage,
-                      child: Text(stage),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    setState(() {
-                      _selectedSleepStage = newValue;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select a sleep stage';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _sleepEfficiencyController,
-                  decoration: const InputDecoration(
-                    labelText: '수면 효율 (Sleep Efficiency)',
-                    suffixText: '%',
-                    hintText: 'e.g., 95',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter sleep efficiency';
-                    }
-                    if (double.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _heartRateController,
-                  decoration: const InputDecoration(
-                    labelText: '심박수 (Heart Rate)',
-                    suffixText: 'bpm',
-                    hintText: 'e.g., 60',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter heart rate';
-                    }
-                    if (int.tryParse(value) == null) {
-                      return 'Please enter a valid number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 40),
-                ElevatedButton(
-                  onPressed: _submitData,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    textStyle: const TextStyle(fontSize: 18),
-                  ),
-                  child: const Text('Submit Data'),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: hint,
+                suffixText: suffix,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              style: const TextStyle(fontSize: 18),
+            ),
+          ],
         ),
       ),
     );
