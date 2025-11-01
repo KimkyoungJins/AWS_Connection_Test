@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   // ❗️서버의 IP 주소를 입력하세요.
-  static const String _baseUrl = "http://3.24.215.72:8080"; 
+  static const String _baseUrl = "http://13.237.113.165:8080"; 
 
   // 수면 데이터 기록 및 분석 API 호출 함수
   static Future<Map<String, dynamic>> recordAndAnalyzeSleep({
@@ -16,8 +16,8 @@ class ApiService {
     final url = Uri.parse('$_baseUrl/api/sleep/record-and-analyze');
 
     final body = jsonEncode({
-      'sleepStartTime': sleepStartTime.toIso8601String(),
-      'sleepEndTime': sleepEndTime.toIso8601String(),
+      'sleepStartTime': sleepStartTime.toUtc().toIso8601String(),
+      'sleepEndTime': sleepEndTime.toUtc().toIso8601String(),
       'heartRate': heartRate,
       'respiratoryRate': respiratoryRate,
       'bodyTemperature': bodyTemperature,
@@ -31,7 +31,7 @@ class ApiService {
       );
 
       if (response.statusCode == 201) {
-        // UTF-8로 디코딩하여 한글 깨짐 방지
+        // UTF-8로 디코딩하여 한글 깨짐   
         return jsonDecode(utf8.decode(response.bodyBytes));
       } else {
         // 서버에서 보낸 에러 메시지가 있다면 함께 표시
