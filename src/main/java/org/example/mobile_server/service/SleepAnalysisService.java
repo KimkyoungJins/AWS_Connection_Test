@@ -40,16 +40,64 @@ public class SleepAnalysisService {
         String status;
         String message;
 
-        // [분석 알고리즘 예시]
-        if (totalMinutes < 360 || request.getHeartRate() > 85) { // 6시간 미만이거나 심박수가 85 초과
-            status = "나쁨";
-            message = String.format("총 %d시간 %d분 주무셨네요. 수면 시간이 부족하거나 심박수가 다소 높습니다.", totalMinutes / 60, totalMinutes % 60);
-        } else if (totalMinutes >= 420 && request.getHeartRate() <= 70) { // 7시간 이상이고 심박수가 70 이하
-            status = "좋음";
-            message = String.format("총 %d시간 %d분 동안 안정적인 수면을 취했습니다. 아주 좋습니다!", totalMinutes / 60, totalMinutes % 60);
-        } else {
-            status = "보통";
-            message = String.format("총 %d시간 %d분 주무셨습니다. 무난한 수면 상태입니다.", totalMinutes / 60, totalMinutes % 60);
+        // [새로운 분석 알고리즘]
+        // 각 항목별 상태 레벨 계산 (0: 좋음, 1: 보통, 2: 나쁨, 3: 위험)
+        int hr = request.getHeartRate();
+        int hrLevel;
+        if (hr < 30 || hr > 150) {
+            hrLevel = 3; // 위험
+        } else if (hr < 40 || hr >= 86) {
+            hrLevel = 2; // 나쁨
+        } else if (hr >= 61 && hr <= 85) {
+            hrLevel = 1; // 보통
+        } else { // 40-60
+            hrLevel = 0; // 좋음
+        }
+
+        int rr = request.getRespiratoryRate();
+        int rrLevel;
+        if (rr < 5 || rr > 40) {
+            rrLevel = 3; // 위험
+        } else if (rr < 10 || rr > 25) {
+            rrLevel = 2; // 나쁨
+        } else if (rr >= 12 && rr <= 18) {
+            rrLevel = 0; // 좋음
+        } else { // 10, 11, 19-25
+            rrLevel = 1; // 보통
+        }
+
+        double temp = request.getBodyTemperature();
+        int tempLevel;
+        if (temp < 35.0 || temp > 39.0) {
+            tempLevel = 3; // 위험
+        } else if (temp < 35.5 || temp > 37.8) {
+            tempLevel = 2; // 나쁨
+        } else if (temp >= 36.0 && temp <= 37.0) {
+            tempLevel = 0; // 좋음
+        } else { // 35.5-35.9, 37.1-37.8
+            tempLevel = 1; // 보통
+        }
+
+        // 가장 나쁜 상태를 기준으로 전체 수면 상태 결정
+        int finalLevel = Math.max(hrLevel, Math.max(rrLevel, tempLevel));
+
+        switch (finalLevel) {
+            case 3:
+                status = "위험";
+                message = "건강에 위협이 될 수 있는 심각한 비정상 수치가 측정되었습니다. 즉시 전문가의 진단이 필요합니다.";
+                break;
+            case 2:
+                status = "나쁨";
+                message = "스트레스, 불편한 잠자리 등으로 수면의 질이 크게 떨어진 것 같습니다. 원인을 확인해보세요.";
+                break;
+            case 1:
+                status = "보통";
+                message = "대체로 무난한 수면 상태입니다. 꾸준히 좋은 수면 습관을 유지해보세요.";
+                break;
+            default:
+                status = "좋음";
+                message = "몸과 마음이 깊은 휴식을 취했습니다. 이상적인 수면 상태입니다!";
+                break;
         }
 
         // 5. 최종 응답(Response) 객체 생성 및 반환
